@@ -3,6 +3,7 @@ package collector
 import (
 	"strconv"
 	"strings"
+
 	"github.com/encoretechnologies/citrix-netscaler-exporter/netscaler"
 	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
@@ -453,4 +454,11 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		level.Error(e.logger).Log("msg", err)
 		return
 	}
+
+	// Explicitly closing idle connections made by http client
+	// This fixes where connections were not being closed when
+	// this endpoint was being triggered so sockets were being
+	// piled up until the exporter's process ulimit was being reached
+	// which then caused it reject new connections
+	nsClient.CloseIdleConnections()
 }
